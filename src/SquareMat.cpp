@@ -1,8 +1,10 @@
+// noa.honigstein@gmail.com
 #include "SquareMat.hpp"
 #include <cmath>  
 using std::cout;
 using std::endl;
 using std::runtime_error;
+const char PIPE = '|';
 
 namespace matrix {
 
@@ -65,7 +67,7 @@ namespace matrix {
 
     SquareMat SquareMat::operator+(const SquareMat &toAdd) const {
         if (size != toAdd.size) {
-            throw runtime_error("Must be the same size for addition.");
+            throw runtime_error("Matrices must be the same size");
         }
     
         SquareMat result(size);
@@ -79,7 +81,7 @@ namespace matrix {
 
     SquareMat SquareMat::operator-(const SquareMat &toReduce) const {
         if (size != toReduce.size) {
-            throw runtime_error("Must be the same size for addition.");
+            throw runtime_error("Matrices must be the same size");
         }
     
         SquareMat result(size);
@@ -104,7 +106,7 @@ namespace matrix {
     
     SquareMat SquareMat::operator*(const  SquareMat &other) const {
         if (size != other.size) {
-            throw runtime_error("Must be the same size for addition.");
+            throw runtime_error("Matrices must be the same size");
         }
 
         SquareMat result(size);
@@ -119,6 +121,9 @@ namespace matrix {
     }
 
     SquareMat SquareMat::operator*(double scalar) const {
+        if (std::isnan(scalar) || std::isinf(scalar)) {
+            throw std::runtime_error("Invalid scalar: NaN, or infinity");
+        }
 
         SquareMat result(size);
         
@@ -137,7 +142,7 @@ namespace matrix {
 
     SquareMat SquareMat::operator%(const SquareMat &toMultiply) const {
         if (size != toMultiply.size) {
-            throw runtime_error("Must be the same size for addition.");
+            throw runtime_error("Matrices must be the same size");
         }
     
         SquareMat result(size);
@@ -150,8 +155,8 @@ namespace matrix {
     }
 
     SquareMat SquareMat::operator%(int scalar) const {
-        if (scalar == 0) {
-            throw runtime_error("error! division by 0.");
+        if (scalar == 0.0 || std::isnan(scalar) || std::isinf(scalar)) {
+            throw std::runtime_error("Invalid scalar: division by zero, NaN, or infinity");
         }
         SquareMat result(size);
         
@@ -164,6 +169,9 @@ namespace matrix {
     }
 
     SquareMat SquareMat::operator/(double scalar) const {
+        if (scalar == 0.0 || std::isnan(scalar) || std::isinf(scalar)) {
+            throw std::runtime_error("Invalid scalar: division by zero, NaN, or infinity");
+        }
 
         SquareMat result(size);
         
@@ -179,7 +187,9 @@ namespace matrix {
         if (scalar < 0) {
             throw runtime_error("Power must be positive.");
         }
-        
+        if (std::isnan(scalar)) {
+            throw std::runtime_error("Invalid scalar: NaN");
+        }
         SquareMat result(size);
 
         if(scalar == 0){
@@ -195,16 +205,225 @@ namespace matrix {
             }
         }else{
 
-        result = (*this);
-        
-        for (int i = 1; i < scalar; ++i) {
-            result = result*(*this);
+            result = (*this);
+            
+            for (int i = 1; i < scalar; ++i) {
+                result = result*(*this);
+            }
         }
-    }
+
 
         return result;
 
     }
+
+    SquareMat& SquareMat::operator++() {
+        for (int i = 0; i < size * size; ++i) {
+            data[i] += 1;
+        }
+        return *this;
+    }
+
+    SquareMat SquareMat::operator++(int) {
+        SquareMat befor = *this;
+        ++(*this);
+        return befor;
+    }
+
+    SquareMat& SquareMat::operator--() {
+        for (int i = 0; i < size * size; ++i) {
+            data[i] -= 1;
+        }
+        return *this;
+    }
+
+    SquareMat SquareMat::operator--(int) {
+        SquareMat befor = *this;
+        --(*this);
+        return befor;
+    }
+
+    SquareMat SquareMat::operator~() const {
+        SquareMat result(size);
+
+        for (int i = 0; i < size; ++i) {
+            for (int j = 0; j < size; ++j) {
+                result[j][i] = (*this)[i][j];
+            }
+        }
+        return result;
+    }
+
+    double SquareMat::sumMat() const{
+        double sum = 0.0;
+        for (int i = 0; i < size * size; ++i) {
+            sum += data[i];
+        }
+        return sum;
+
+    }
+    bool SquareMat::operator==(const SquareMat& other) const {
+
+        return (*this).sumMat() == other.sumMat();
+    }
+    bool SquareMat::operator!=(const SquareMat& other) const {
+
+        return (*this).sumMat() != other.sumMat();
+    }
+    bool SquareMat::operator<(const SquareMat& other) const {
+
+        return (*this).sumMat() < other.sumMat();
+    }
+    
+    bool SquareMat::operator>(const SquareMat& other) const {
+
+        return (*this).sumMat() > other.sumMat();
+
+    }
+    
+    bool SquareMat::operator<=(const SquareMat& other) const {
+
+        return (*this).sumMat() <= other.sumMat();
+
+    }
+    
+    bool SquareMat::operator>=(const SquareMat& other) const {
+
+        return (*this).sumMat() >= other.sumMat();
+
+    }
+
+    double SquareMat::operator!() const {
+        // Base case: 1x1 matrix, determinant is the single value
+        if (size == 1) {
+            return data[0];
+        }
+    
+        // Base case: 2x2 matrix, use the classic determinant formula
+        if (size == 2) {
+            return (*this)[0][0] * (*this)[1][1] - (*this)[0][1] * (*this)[1][0];
+        }
+    
+        double det = 0.0;
+    
+        // Loop over the first row, expanding the determinant along this row
+        for (int x = 0; x < size; ++x) {
+            // Create a sub-matrix that excludes the first row and column x
+            SquareMat subMatrix(size - 1);
+    
+            int subi = 0;  // sub-matrix row index
+            for (int i = 1; i < size; ++i) {  // skip the first row
+                int subj = 0;  // sub-matrix column index
+                for (int j = 0; j < size; ++j) {
+                    if (j == x) continue;  // skip the current column
+                    // Copy remaining elements into the sub-matrix
+                    subMatrix[subi][subj] = (*this)[i][j];
+                    ++subj;
+                }
+                ++subi;
+            }
+    
+            // Add or subtract the determinant of the sub-matrix, depending on position
+            det += pow(-1.0, x) * (*this)[0][x] * !subMatrix;
+        }
+    
+        return det;
+    }
+
+    SquareMat& SquareMat::operator+=(const SquareMat& other) {
+        if (size != other.size)
+            throw runtime_error("Matrices must be the same size");
+    
+        for (int i = 0; i < size * size; ++i) {
+            data[i] += other.data[i];
+        }
+        return *this;
+    }
+
+    SquareMat& SquareMat::operator-=(const SquareMat& other) {
+        if (size != other.size)
+            throw runtime_error("Matrices must be the same size");
+    
+        for (int i = 0; i < size * size; ++i) {
+            data[i] -= other.data[i];
+        }
+        return *this;
+    }
+
+    SquareMat& SquareMat::operator*=(const SquareMat& other) {
+        if (size != other.size)
+            throw std::runtime_error("Matrices must be the same size");
+    
+        SquareMat result = (*this) * other;  
+
+        *this = result;  
+        return *this;
+    }
+
+    SquareMat& SquareMat::operator*=(double scalar) {
+        if (std::isnan(scalar) || std::isinf(scalar)) {
+            throw std::runtime_error("Invalid scalar: NaN, or infinity");
+        }
+        for (int i = 0; i < size * size; ++i) {
+            data[i] *= scalar;
+        }
+        return *this;
+    }
+
+    SquareMat& SquareMat::operator/=(double scalar) {
+        if (scalar == 0.0 || std::isnan(scalar) || std::isinf(scalar)) {
+            throw std::runtime_error("Invalid scalar: division by zero, NaN, or infinity");
+        }
+    
+        for (int i = 0; i < size * size; ++i) {
+            data[i] /= scalar;
+        }
+        return *this;
+    }
+    
+    SquareMat& SquareMat::operator%=(const SquareMat& other) {
+        if (size != other.size)
+            throw runtime_error("Matrices must be the same size");
+    
+        for (int i = 0; i < size * size; ++i) {
+            data[i] *= other.data[i];
+        }
+        return *this;
+    }
+
+    SquareMat& SquareMat::operator%=(int scalar) {
+        if (scalar == 0.0 || std::isnan(scalar) || std::isinf(scalar)) {
+            throw std::runtime_error("Invalid scalar: division by zero, NaN, or infinity");
+        }
+    
+        for (int i = 0; i < size * size; ++i) {
+            data[i] = fmod(data[i], static_cast<double>(scalar));
+        }
+        return *this;
+    }
+    
+    
+    
+    
+    
+
+    
+    
+    
+    std::ostream &operator<<(std::ostream &os, const SquareMat &matrix) {
+    
+        for (int i = 0; i < matrix.size; i++) {
+            os << PIPE;
+            for (int j = 0; j < matrix.size; j++) {
+                os << matrix[i][j] << PIPE;
+            }
+            os << std::endl;
+        }
+        return os;
+    }
+
+
+
 
 
 

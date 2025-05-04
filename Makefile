@@ -21,7 +21,7 @@ $(EXEC): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $@ $(SRC)
 
 # Run the demonstration (make run)
-run: $(EXEC)
+Main: $(EXEC)
 	./$(EXEC)
 
 # Build the unit test executable
