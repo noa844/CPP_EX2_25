@@ -16,8 +16,8 @@ namespace matrix {
                 // This is necessary because C++ only allows the first [] to be overloaded,
                 // so the second [] must be handled manually through this helper class.
                 class RowAccessor {
-                        double* row;
-                        int size;
+                        double* row; // Pointer to the beginning of line i.
+                        int size; // Row size/Column count.
                 public:
                     RowAccessor(double* row, int size) : row(row), size(size) {}
 
@@ -50,11 +50,18 @@ namespace matrix {
         SquareMat operator-() const;
         SquareMat operator*(const SquareMat& other) const;
         SquareMat operator*(double scalar) const;
-        friend SquareMat operator*(double scalar, const SquareMat& mat);
+        
         SquareMat operator%(const SquareMat& other) const;
         SquareMat operator%(int scalar) const;
         SquareMat operator/(double scalar) const;
         SquareMat operator^(int power) const;
+
+        SquareMat& operator++();   // prefix operator
+        SquareMat operator++(int); // postfix operator
+        SquareMat& operator--(); // prefix operator
+        SquareMat operator--(int); // postfix operator
+
+        SquareMat operator~() const; 
 
         SquareMat& operator+=(const SquareMat& other);
         SquareMat& operator-=(const SquareMat& other);
@@ -64,13 +71,7 @@ namespace matrix {
         SquareMat& operator%=(int scalar);
         SquareMat& operator/=(double scalar);
 
-        SquareMat& operator++();   // pré-incrément
-        SquareMat operator++(int); // post-incrément
-        SquareMat& operator--();
-        SquareMat operator--(int);
-
-        SquareMat operator~() const; // transposée
-
+       
         bool operator==(const SquareMat& other) const;
         bool operator!=(const SquareMat& other) const;
         bool operator<(const SquareMat& other) const;
@@ -80,9 +81,10 @@ namespace matrix {
 
         double operator!() const; // déterminant
 
-        // Méthodes utilitaires
-        void print(std::ostream& os) const;
+        friend std::ostream& operator<<(std::ostream& os, const SquareMat& mat);
+
     };
 
-    std::ostream& operator<<(std::ostream& os, const SquareMat& mat);
+     SquareMat operator*(double scalar, const SquareMat& mat);
+    
 }
